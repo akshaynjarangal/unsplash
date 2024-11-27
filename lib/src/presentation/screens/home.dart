@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:unsplash/src/core/app_assets.dart';
+import 'package:unsplash/src/data/models/unsplash_model.dart';
 import 'package:unsplash/src/presentation/provider/home_provider.dart';
 import 'package:unsplash/src/presentation/widgets/app_space_widget.dart';
 
@@ -65,14 +66,14 @@ class HomeView extends StatelessWidget {
                     sliver: SliverToBoxAdapter(
                       child: StaggeredGrid.count(
                         crossAxisCount: 2,
-                        mainAxisSpacing: 32,
+                        mainAxisSpacing: 16,
                         crossAxisSpacing: 16,
                         children: [
                           ...List.generate(state.imageList.length, (index) {
                             final images = state.imageList[index];
                             return StaggeredGridTile.count(
                               crossAxisCellCount: 1,
-                              mainAxisCellCount: index.isEven ? 1.5 : 1.25,
+                              mainAxisCellCount: index.isEven ? 2.5 : 2,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -80,7 +81,9 @@ class HomeView extends StatelessWidget {
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(20),
                                       child: GestureDetector(
-                                        onTap: () {},
+                                        onTap: () {
+                                          openSheet(context, state, images);
+                                        },
                                         child: Image.network(
                                           '${images.urls?.regular}',
                                           fit: BoxFit.cover,
@@ -123,94 +126,16 @@ class HomeView extends StatelessWidget {
                                           '${images.altDescription}',
                                           style: Theme.of(context)
                                               .textTheme
-                                              .titleLarge
+                                              .bodyLarge
                                               ?.copyWith(
-                                                fontWeight: FontWeight.w600,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                         ),
                                       ),
-                                      setWidth(32),
+                                      setWidth(8),
                                       IconButton(
                                         onPressed: () {
-                                          showModalBottomSheet(
-                                            backgroundColor: Colors.white,
-                                            showDragHandle: true,
-                                            context: context,
-                                            routeSettings:
-                                                RouteSettings(arguments: state),
-                                            builder: (context) {
-                                              final provider =
-                                                  ModalRoute.of(context)
-                                                          ?.settings
-                                                          .arguments
-                                                      as HomeProvider;
-
-                                              return ListenableProvider(
-                                                create: (context) => provider,
-                                                child: Consumer<HomeProvider>(
-                                                  builder:
-                                                      (context, pro, child) {
-                                                    return Padding(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                        horizontal: 16,
-                                                        vertical: 32,
-                                                      ),
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .stretch,
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              ElevatedButton
-                                                                  .icon(
-                                                                icon: pro
-                                                                        .isDownloading
-                                                                    ? const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(8.0),
-                                                                        child:
-                                                                            CircularProgressIndicator(
-                                                                          color:
-                                                                              Colors.white,
-                                                                          strokeCap:
-                                                                              StrokeCap.round,
-                                                                          strokeWidth:
-                                                                              2,
-                                                                        ),
-                                                                      )
-                                                                    : const Icon(
-                                                                        Icons
-                                                                            .download,
-                                                                      ),
-                                                                onPressed: () {
-                                                                  pro.downloadImage(
-                                                                    images.urls
-                                                                            ?.raw ??
-                                                                        '',
-                                                                  );
-                                                                },
-                                                                label:
-                                                                    const Text(
-                                                                  'Download Image',
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                          );
+                                          openSheet(context, state, images);
                                         },
                                         icon:
                                             const Icon(CupertinoIcons.ellipsis),
@@ -268,6 +193,67 @@ class HomeView extends StatelessWidget {
           return const SizedBox();
         },
       ),
+    );
+  }
+
+  Future<dynamic> openSheet(
+      BuildContext context, HomeProvider state, UnsplashModel images) {
+    return showModalBottomSheet(
+      backgroundColor: Colors.white,
+      showDragHandle: true,
+      context: context,
+      routeSettings: RouteSettings(arguments: state),
+      builder: (context) {
+        final provider =
+            ModalRoute.of(context)?.settings.arguments as HomeProvider;
+
+        return ListenableProvider(
+          create: (context) => provider,
+          child: Consumer<HomeProvider>(
+            builder: (context, pro, child) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 32,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: pro.isDownloading
+                              ? const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeCap: StrokeCap.round,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.download,
+                                ),
+                          onPressed: () {
+                            pro.downloadImage(
+                              images.urls?.raw ?? '',
+                            );
+                          },
+                          label: const Text(
+                            'Download Image',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
